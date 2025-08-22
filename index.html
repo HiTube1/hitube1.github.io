@@ -11,36 +11,41 @@
             color: #333;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
         .container {
             background-color: #fff;
-            padding: 25px;
+            padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 800px;
-            text-align: center;
+            max-width: 900px;
         }
 
         h1 {
             color: #2c3e50;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            text-align: center;
         }
 
-        .code-area {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        .editor-section, .output-section {
+            margin-bottom: 25px;
         }
 
-        #python-code {
+        h2 {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        #python-code, #file-content {
             width: 100%;
-            height: 250px;
+            height: 200px;
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -48,12 +53,19 @@
             font-size: 14px;
             background-color: #f9f9f9;
             resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        #python-code:focus, #file-content:focus {
+            border-color: #3498db;
+            outline: none;
         }
 
         .button-group {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
+            margin-top: 15px;
         }
         
         button {
@@ -71,7 +83,7 @@
             color: white;
         }
         
-        #run-btn:disabled {
+        #run-btn:disabled, #save-file-btn:disabled {
             background-color: #bdc3c7;
             cursor: not-allowed;
         }
@@ -80,10 +92,23 @@
             background-color: #2980b9;
             transform: translateY(-2px);
         }
-
-        .output-container {
-            margin-top: 20px;
-            text-align: left;
+        
+        #save-file-btn, #clear-output-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        #save-file-btn:hover, #clear-output-btn:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        
+        #clear-output-btn {
+            background-color: #e74c3c;
+        }
+        
+        #clear-output-btn:hover {
+            background-color: #c0392b;
         }
 
         #output {
@@ -92,33 +117,49 @@
             padding: 15px;
             border-radius: 8px;
             white-space: pre-wrap;
-            min-height: 50px;
+            min-height: 100px;
             font-family: 'Courier New', Courier, monospace;
             overflow-y: auto;
-            max-height: 300px;
+            max-height: 400px;
         }
 
         .loading-text {
             color: #3498db;
-            margin-top: 10px;
+            text-align: center;
             font-style: italic;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Python Code Runner 🚀</h1>
-    <div class="code-area">
+    <h1>Python Code Runner 🐍</h1>
+
+    <div class="editor-section">
+        <h2>Python Code</h2>
         <textarea id="python-code" placeholder="Введите ваш Python код здесь..."></textarea>
+    </div>
+
+    <div class="editor-section">
+        <h2>Virtual File (e.g., test.txt)</h2>
+        <input type="text" id="file-name" placeholder="Имя файла (e.g., test.txt)">
+        <textarea id="file-content" placeholder="Содержимое файла..."></textarea>
         <div class="button-group">
-            <button id="run-btn">Запустить</button>
+            <button id="save-file-btn">Сохранить файл</button>
         </div>
     </div>
+
+    <div class="button-group">
+        <button id="run-btn">Запустить</button>
+        <button id="clear-output-btn">Очистить вывод</button>
+    </div>
+
     <div id="loading" class="loading-text" style="display:none;">
         Загрузка Pyodide, пожалуйста, подождите...
     </div>
-    <div class="output-container">
+
+    <div class="output-section">
         <h2>Вывод:</h2>
         <pre id="output"></pre>
     </div>
@@ -128,7 +169,11 @@
 <script>
     let pyodide;
     const runBtn = document.getElementById('run-btn');
+    const saveFileBtn = document.getElementById('save-file-btn');
+    const clearOutputBtn = document.getElementById('clear-output-btn');
     const pythonCode = document.getElementById('python-code');
+    const fileNameInput = document.getElementById('file-name');
+    const fileContentArea = document.getElementById('file-content');
     const output = document.getElementById('output');
     const loadingText = document.getElementById('loading');
 
@@ -136,21 +181,28 @@
     async function initializePyodide() {
         loadingText.style.display = 'block';
         runBtn.disabled = true;
+        saveFileBtn.disabled = true;
         try {
-            pyodide = await loadPyodide();
+            // Убеждаемся, что Pyodide загружается правильно
+            pyodide = await loadPyodide({
+                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"
+            });
+            output.textContent = "Pyodide загружен и готов к работе!";
             console.log("Pyodide загружен и готов!");
+        } catch (error) {
+            output.textContent = `Ошибка при загрузке Pyodide: ${error.message}. Пожалуйста, проверьте ваше интернет-соединение или URL Pyodide.`;
+            console.error("Ошибка при загрузке Pyodide:", error);
+        } finally {
             loadingText.style.display = 'none';
             runBtn.disabled = false;
-        } catch (error) {
-            output.textContent = "Ошибка при загрузке Pyodide: " + error.message;
-            console.error("Ошибка при загрузке Pyodide:", error);
+            saveFileBtn.disabled = false;
         }
     }
 
     // Запуск инициализации при загрузке страницы
     initializePyodide();
 
-    // Обработчик события для кнопки запуска
+    // Обработчик для кнопки "Запустить"
     runBtn.addEventListener('click', async () => {
         if (!pyodide) {
             output.textContent = "Pyodide ещё не загружен. Пожалуйста, подождите...";
@@ -163,26 +215,25 @@
             return;
         }
 
-        output.textContent = "Запуск кода...";
+        output.textContent = "Запуск кода...\n";
         runBtn.disabled = true;
-
+        
         try {
-            // Перенаправляем stdout и stderr в консоль и на нашу страницу
-            pyodide.set
-            pyodide.set
-            pyodide.set
+            // Перенаправляем stdout и stderr
+            let scriptOutput = '';
             pyodide.setStdout({
-                batched: (text) => { output.textContent += text + '\n'; }
+                batched: (text) => { scriptOutput += text + '\n'; }
             });
             pyodide.setStderr({
-                batched: (text) => { output.textContent += "Ошибка: " + text + '\n'; }
+                batched: (text) => { scriptOutput += "Ошибка: " + text + '\n'; }
             });
 
             // Запускаем код Python
             await pyodide.runPythonAsync(code);
-            output.textContent = output.textContent.trim(); // Удаляем лишние пробелы в конце
+            output.textContent += scriptOutput;
+            output.scrollTop = output.scrollHeight; // Прокрутка вниз
         } catch (error) {
-            output.textContent = "Произошла ошибка выполнения: " + error.message;
+            output.textContent += "\nПроизошла ошибка выполнения: " + error.message;
             console.error("Ошибка выполнения:", error);
         } finally {
             runBtn.disabled = false;
@@ -190,6 +241,35 @@
             pyodide.setStdout({});
             pyodide.setStderr({});
         }
+    });
+
+    // Обработчик для кнопки "Сохранить файл"
+    saveFileBtn.addEventListener('click', () => {
+        if (!pyodide) {
+            output.textContent = "Pyodide ещё не загружен.";
+            return;
+        }
+        
+        const fileName = fileNameInput.value.trim();
+        const fileContent = fileContentArea.value;
+
+        if (!fileName) {
+            output.textContent = "Пожалуйста, введите имя файла.";
+            return;
+        }
+
+        try {
+            pyodide.FS.writeFile(fileName, fileContent, { encoding: "utf8" });
+            output.textContent = `Файл '${fileName}' успешно сохранён в виртуальной файловой системе.`;
+        } catch (error) {
+            output.textContent = `Ошибка при сохранении файла: ${error.message}`;
+            console.error("Ошибка при сохранении файла:", error);
+        }
+    });
+    
+    // Обработчик для кнопки "Очистить вывод"
+    clearOutputBtn.addEventListener('click', () => {
+        output.textContent = '';
     });
 </script>
 
