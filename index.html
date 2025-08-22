@@ -99,11 +99,21 @@
     </div>
 
     <script>
-        // Простое XOR-шифрование для симуляции
-        function xorEncryptDecrypt(text, key) {
+        // Простая обфускация через XOR и Base64
+        function obfuscate(text, key) {
             let result = '';
             for (let i = 0; i < text.length; i++) {
                 result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return btoa(result); // Кодируем в Base64 для хранения
+        }
+
+        // Деобфускация
+        function deobfuscate(obfuscated, key) {
+            const decoded = atob(obfuscated);
+            let result = '';
+            for (let i = 0; i < decoded.length; i++) {
+                result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
             }
             return result;
         }
@@ -119,13 +129,13 @@
                 return;
             }
 
-            // Симуляция пути /scripts/имяскрипта.lua
+            // Формируем путь /scripts/имяскрипта.lua
             const scriptId = `scripts/${name}.lua`;
-            const encryptedContent = xorEncryptDecrypt(content, password);
+            const obfuscatedContent = obfuscate(content, password);
 
             // Сохранение в localStorage (эмуляция папки code)
             const scripts = JSON.parse(localStorage.getItem('scripts') || '{}');
-            scripts[scriptId] = { encrypted: btoa(encryptedContent), password };
+            scripts[scriptId] = { obfuscated: obfuscatedContent, password };
             localStorage.setItem('scripts', JSON.stringify(scripts));
 
             // Обновление списка
@@ -133,6 +143,7 @@
             document.getElementById('script-name').value = '';
             document.getElementById('script-password').value = '';
             document.getElementById('script-content').value = '';
+            alert('Скрипт добавлен! Для сохранения в реальную папку code используйте GitHub Actions.');
         }
 
         // Обновление списка скриптов
@@ -157,7 +168,7 @@
             document.getElementById('view-password').value = '';
             document.getElementById('script-output').value = '';
             document.getElementById('error-message').classList.add('hidden');
-            window.currentScriptId = scriptId; // Сохраняем текущий ID скрипта
+            window.currentScriptId = scriptId;
         }
 
         // Просмотр скрипта
@@ -180,10 +191,10 @@
                 return;
             }
 
-            const decryptedContent = xorEncryptDecrypt(atob(script.encrypted), password);
-            output.value = decryptedContent;
+            const deobfuscatedContent = deobfuscate(script.obfuscated, password);
+            output.value = deobfuscatedContent;
             errorMessage.classList.add('hidden');
-            console.log(`loadstring([[${decryptedContent}]])()`); // Для инжектора
+            console.log(`loadstring([[${deobfuscatedContent}]])()`); // Для инжектора
         }
 
         // Вернуться к списку
@@ -196,7 +207,6 @@
         // Инициализация
         window.onload = () => {
             updateScriptList();
-            // Проверка URL для прямого доступа к скрипту
             const hash = window.location.hash.slice(1);
             if (hash && hash.startsWith('scripts/')) {
                 showViewSection(hash);
