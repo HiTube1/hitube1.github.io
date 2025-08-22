@@ -1,0 +1,26 @@
+name: Save Obfuscated Scripts
+on:
+  workflow_dispatch: # Запуск вручную или по API
+jobs:
+  save-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Install dependencies
+        run: npm install
+      - name: Save script to code folder
+        run: |
+          # Пример: скрипт для сохранения обфусцированного файла
+          node save-script.js
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add code/
+          git commit -m "Add obfuscated script"
+          git push
