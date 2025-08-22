@@ -3,302 +3,918 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Симулятор майнинга LalTC</title>
+    <title>lalTC Mining Simulator</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+        * {
             margin: 0;
-            line-height: 1.6;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #b0b0b0;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .container {
-            width: 90%;
-            max-width: 800px;
-            background-color: #1e1e1e;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        h1 {
-            color: #66ff66;
-            text-align: center;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(102, 255, 102, 0.4);
-        }
-
-        .stats, .upgrade-section, .log {
-            margin-bottom: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            border-left: 5px solid #66ff66;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            min-height: 100vh;
         }
 
-        h2 {
-            color: #99ff99;
-            margin-top: 0;
+        .panel {
+            background: rgba(40, 40, 40, 0.9);
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #e0e0e0;
+            font-size: 2.2em;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+
+        .mining-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
 
         .stat-item {
+            background: rgba(20, 20, 20, 0.8);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4a9eff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .mining-controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .mining-button {
+            background: linear-gradient(45deg, #4a9eff, #3d7dd6);
+            border: none;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .mining-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #5aa6ff, #4a88e6);
+        }
+
+        .mining-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            font-size: 0.9em;
         }
 
         .progress-bar {
-            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
             height: 20px;
-            background-color: #444;
-            border-radius: 5px;
+            border-radius: 4px;
             overflow: hidden;
-            margin-top: 10px;
+            border: 1px solid #555;
         }
 
-        .progress {
+        .progress-fill {
             height: 100%;
-            background-color: #66ff66;
+            background: linear-gradient(90deg, #4a9eff, #3d7dd6);
             width: 0%;
-            transition: width 0.1s linear;
+            transition: width 0.3s ease;
         }
 
-        .upgrade-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #444;
+
+        .hardware-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
         }
 
-        .upgrade-item:last-child {
-            border-bottom: none;
+        .hardware-item {
+            background: rgba(20, 20, 20, 0.8);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            position: relative;
+            overflow: hidden;
         }
 
-        .upgrade-item button {
-            background-color: #66ff66;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            color: #1e1e1e;
+
+
+        .hardware-name {
             font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            margin-bottom: 10px;
+            color: #e0e0e0;
         }
 
-        .upgrade-item button:hover {
-            background-color: #33cc33;
+        .hardware-stats {
+            font-size: 0.9em;
+            line-height: 1.4;
         }
 
-        .upgrade-item button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            color: #aaa;
+        .temperature {
+            color: #ff8c42;
+        }
+
+        .temperature.hot {
+            color: #ff3535;
+            animation: tempWarning 1s ease-in-out infinite;
+        }
+
+        @keyframes tempWarning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .wallet-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border-radius: 6px;
+            border: 1px solid #555;
+        }
+
+        .balance {
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: #4a9eff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+
+        .mining-log {
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9em;
+            line-height: 1.4;
         }
 
         .log-entry {
             margin-bottom: 5px;
-            color: #b0b0b0;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            to { opacity: 1; }
         }
 
-        .currency-symbol {
-            color: #66ff66;
+        .timestamp {
+            color: #666;
+        }
+
+        .sound-controls {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .sound-button {
+            background: rgba(40, 40, 40, 0.8);
+            border: 1px solid #555;
+            color: #b0b0b0;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .balance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .balance-item {
+            text-align: center;
+            background: rgba(10, 10, 10, 0.6);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .balance-label {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .trading-controls {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .trade-button {
+            background: linear-gradient(45deg, #28a745, #20883d);
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+
+        .trade-button:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(45deg, #34b049, #28a745);
+        }
+
+        .shop-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border-radius: 6px;
+            border: 1px solid #555;
+        }
+
+        .gpu-shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .gpu-shop-item {
+            background: rgba(30, 30, 30, 0.8);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            text-align: center;
+        }
+
+        .gpu-price {
+            color: #ffc107;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .buy-button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .buy-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .gpu-visual {
+            width: 100%;
+            height: 60px;
+            margin: 10px 0;
+        }
+
+        .electricity-section {
+            background: rgba(30, 20, 20, 0.8);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            margin-top: 15px;
+        }
+
+        .electricity-cost {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            
+            .mining-stats,
+            .hardware-grid,
+            .balance-grid,
+            .gpu-shop-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                font-size: 2em;
+            }
+        }
+
+        /* Матричный дождь фон */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+        }
+
+        .matrix-char {
+            position: absolute;
+            color: #4a9eff;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            animation: matrixFall linear infinite;
+        }
+
+        @keyframes matrixFall {
+            0% {
+                transform: translateY(-100vh);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
-
+    <div class="matrix-bg" id="matrixBg"></div>
+    
     <div class="container">
-        <h1>Симулятор майнинга LalTC</h1>
-        <div class="stats">
-            <h2>Статистика майнинга</h2>
-            <div class="stat-item">
-                <span>Баланс:</span> <span id="balance"><span class="currency-symbol">0.0000</span> LalTC</span>
+        <div class="panel header">
+            <h1>lalTC Mining Simulator v2.1</h1>
+            <p>Профессиональная платформа для майнинга криптовалют</p>
+        </div>
+
+        <div class="panel">
+            <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 8px;"><path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" fill="#4a9eff"/></svg>Панель управления майнингом</h2>
+            <div class="mining-controls">
+                <button class="mining-button" id="miningButton">Начать майнинг</button>
             </div>
-            <div class="stat-item">
-                <span>Скорость хэширования:</span> <span id="hashRate">0 H/s</span>
+
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Прогресс блока:</span>
+                    <span id="blockProgress">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
             </div>
-            <div class="stat-item">
-                <span>Доходность:</span> <span id="incomeRate">0.0000 LalTC/s</span>
+
+            <div class="wallet-section">
+                <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 6px;"><path d="M19 7H18V6C18 3.79 16.21 2 14 2H10C7.79 2 6 3.79 6 6V7H5C3.9 7 3 7.9 3 9V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V9C21 7.9 20.1 7 19 7ZM10 4H14C15.1 4 16 4.9 16 6V7H8V6C8 4.9 8.9 4 10 4ZM19 19H5V9H19V19Z" fill="#4a9eff"/><circle cx="12" cy="14" r="2" fill="#4a9eff"/></svg>Баланс кошелька</h3>
+                <div class="balance-grid">
+                    <div class="balance-item">
+                        <div class="balance-label">lalTC</div>
+                        <div class="balance" id="balance">0.000000</div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-label">USD</div>
+                        <div class="balance" id="usdBalance">$0.00</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 10px; color: #888;">
+                    Курс: 1 lalTC = $<span id="price">47,350.25</span>
+                </div>
+                <div class="trading-controls">
+                    <button class="trade-button" id="sellButton">Продать lalTC</button>
+                </div>
             </div>
-            <div class="stat-item">
-                <span>Сложность сети:</span> <span id="difficulty">1.00</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress" id="hashProgress"></div>
+
+            <div class="sound-controls">
+                <button class="sound-button" id="soundToggle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 4px;"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#b0b0b0" stroke-width="2" fill="none"/><path d="M19.07 4.93C20.9 6.76 22 9.3 22 12C22 14.7 20.9 17.24 19.07 19.07M15.54 8.46C16.4 9.32 17 10.6 17 12C17 13.4 16.4 14.68 15.54 15.54" stroke="#b0b0b0" stroke-width="2" fill="none"/></svg>Звук ВКЛ</button>
             </div>
         </div>
 
-        <div class="upgrade-section">
-            <h2>Магазин улучшений</h2>
-            <div class="upgrade-item">
-                <span><i class="currency-symbol">CPU </i> (уровень <span id="cpuLevel">1</span>)</span>
-                <button id="buyCpuBtn">Купить за <span id="cpuCost">1.0000</span> LalTC</button>
+        <div class="panel">
+            <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 8px;"><path d="M3 13H5L8 7L12 17L16 10L19 13H21V15H18L16 12L12 19L8 9L6 15H3V13Z" stroke="#4a9eff" stroke-width="2" fill="none"/></svg>Статистика майнинга</h2>
+            <div class="mining-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Хешрейт</div>
+                    <div class="stat-value" id="hashrate">0 MH/s</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Блоков найдено</div>
+                    <div class="stat-value" id="blocksFound">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Время работы</div>
+                    <div class="stat-value" id="uptime">00:00:00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Потребление</div>
+                    <div class="stat-value" id="powerUsage">0 W</div>
+                </div>
             </div>
-            <div class="upgrade-item">
-                <span><i class="currency-symbol">GPU </i> (уровень <span id="gpuLevel">1</span>)</span>
-                <button id="buyGpuBtn">Купить за <span id="gpuCost">5.0000</span> LalTC</button>
+
+            <div class="electricity-section">
+                <h4>⚡ Расходы на электричество</h4>
+                <div>Стоимость за кВт/ч: $<span id="electricityRate">0.12</span></div>
+                <div>Расход в час: <span class="electricity-cost" id="hourlyCost">$0.00</span></div>
+                <div>Общие расходы: <span class="electricity-cost" id="totalElectricityCost">$0.00</span></div>
+                <button class="trade-button" id="payElectricityButton" style="margin-top: 10px; background: linear-gradient(45deg, #dc3545, #c82333);">Оплатить счёт</button>
+            </div>
+
+            <h3 style="margin-top: 20px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 6px;"><rect x="2" y="4" width="20" height="14" rx="2" stroke="#4a9eff" stroke-width="2" fill="none"/><path d="M8 21L16 21" stroke="#4a9eff" stroke-width="2"/><path d="M12 17L12 21" stroke="#4a9eff" stroke-width="2"/></svg>Мои видеокарты</h3>
+            <div class="hardware-grid" id="ownedGpuGrid">
+                <!-- Купленные видеокарты будут добавляться сюда динамически -->
             </div>
         </div>
 
-        <div class="log">
-            <h2>Лог</h2>
-            <div id="log-container"></div>
+        <div class="panel">
+            <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 8px;"><path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="#4a9eff" stroke-width="2" fill="none"/><path d="M14 2V8H20" stroke="#4a9eff" stroke-width="2" fill="none"/><path d="M16 13H8" stroke="#4a9eff" stroke-width="2"/><path d="M16 17H8" stroke="#4a9eff" stroke-width="2"/><path d="M10 9H8" stroke="#4a9eff" stroke-width="2"/></svg>Лог майнинга</h2>
+            <div class="mining-log" id="miningLog">
+                <div class="log-entry">
+                    <span class="timestamp">[System]</span> Система готова к запуску майнинга
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Игровые переменные
-        let balance = 0;
-        let cpuLevel = 1;
-        let gpuLevel = 1;
-        let baseHashRate = 1; // Базовый хэшрейт для CPU
-        let cpuMultiplier = 1;
-        let gpuMultiplier = 5; // GPU дает больше, чем CPU
-        let currentHash = 0;
-        let targetHash = 100;
-        let difficulty = 1.0;
-        let difficultyIncreaseFactor = 0.01; // Насколько увеличивается сложность за каждый блок
-        let blockReward = 10;
-        let logLimit = 15;
+        class LalTCMiner {
+            constructor() {
+                this.isMining = false;
+                this.soundEnabled = true;
+                this.balance = parseFloat(localStorage.getItem('lalTC_balance')) || 0;
+                this.usdBalance = parseFloat(localStorage.getItem('usd_balance')) || 1000;
+                this.totalBlocks = parseInt(localStorage.getItem('lalTC_blocks')) || 0;
+                this.totalElectricityCost = parseFloat(localStorage.getItem('electricity_cost')) || 0;
+                this.ownedGpus = JSON.parse(localStorage.getItem('owned_gpus')) || [];
+                this.startTime = null;
+                this.blockProgress = 0;
+                this.currentHashrate = 0;
+                this.powerUsage = 0;
+                this.price = 47350.25 + (Math.random() - 0.5) * 1000;
+                this.electricityRate = 0.12;
+                
+                this.gpuDatabase = {
+                    rtx4060: { name: 'NVIDIA RTX 4060', hashrate: 28.5, power: 115, price: 299 },
+                    rtx4070: { name: 'NVIDIA RTX 4070', hashrate: 45.2, power: 200, price: 599 },
+                    rtx4080: { name: 'NVIDIA RTX 4080', hashrate: 98.3, power: 250, price: 1199 },
+                    rtx4090: { name: 'NVIDIA RTX 4090', hashrate: 145.7, power: 320, price: 1599 }
+                };
+                
+                this.initializeElements();
+                this.initializeMatrix();
+                this.renderOwnedGpus();
+                this.updateDisplay();
+                this.startPriceFluctuation();
+                this.startHardwareMonitoring();
+                this.startElectricityCharging();
+            }
 
-        // Элементы DOM
-        const balanceEl = document.getElementById('balance');
-        const hashRateEl = document.getElementById('hashRate');
-        const incomeRateEl = document.getElementById('incomeRate');
-        const difficultyEl = document.getElementById('difficulty');
-        const hashProgressEl = document.getElementById('hashProgress');
-        const cpuLevelEl = document.getElementById('cpuLevel');
-        const gpuLevelEl = document.getElementById('gpuLevel');
-        const cpuCostEl = document.getElementById('cpuCost');
-        const gpuCostEl = document.getElementById('gpuCost');
-        const buyCpuBtn = document.getElementById('buyCpuBtn');
-        const buyGpuBtn = document.getElementById('buyGpuBtn');
-        const logContainer = document.getElementById('log-container');
+            initializeElements() {
+                this.elements = {
+                    miningButton: document.getElementById('miningButton'),
+                    balance: document.getElementById('balance'),
+                    usdBalance: document.getElementById('usdBalance'),
+                    hashrate: document.getElementById('hashrate'),
+                    blocksFound: document.getElementById('blocksFound'),
+                    uptime: document.getElementById('uptime'),
+                    powerUsage: document.getElementById('powerUsage'),
+                    blockProgress: document.getElementById('blockProgress'),
+                    progressFill: document.getElementById('progressFill'),
+                    miningLog: document.getElementById('miningLog'),
+                    soundToggle: document.getElementById('soundToggle'),
+                    price: document.getElementById('price'),
+                    sellButton: document.getElementById('sellButton'),
+                    payElectricityButton: document.getElementById('payElectricityButton'),
+                    electricityRate: document.getElementById('electricityRate'),
+                    hourlyCost: document.getElementById('hourlyCost'),
+                    totalElectricityCost: document.getElementById('totalElectricityCost'),
+                    ownedGpuGrid: document.getElementById('ownedGpuGrid')
+                };
 
-        // Функции
-        function calculateHashRate() {
-            // Реалистичная формула: (Базовый_хэшрейт * Множитель_CPU) + (Множитель_GPU)
-            return (baseHashRate * cpuLevel * cpuMultiplier) + (gpuLevel * gpuMultiplier);
-        }
+                this.elements.miningButton.addEventListener('click', () => this.toggleMining());
+                this.elements.soundToggle.addEventListener('click', () => this.toggleSound());
+                if (this.elements.sellButton) {
+                    this.elements.sellButton.addEventListener('click', () => this.sellCrypto());
+                }
+                if (this.elements.payElectricityButton) {
+                    this.elements.payElectricityButton.addEventListener('click', () => this.payElectricity());
+                }
+                
+                // Add buy button listeners
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('buy-button')) {
+                        const gpuType = e.target.getAttribute('data-gpu');
+                        this.buyGpu(gpuType);
+                    }
+                });
+            }
 
-        function calculateIncomeRate() {
-            // Доходность в секунду: (Награда за блок / Целевое хэширование) * Хэшрейт
-            // Это приблизительная формула, но она дает представление о доходе в реальном времени.
-            return (blockReward / targetHash) * calculateHashRate();
-        }
+            initializeMatrix() {
+                const matrixBg = document.getElementById('matrixBg');
+                const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+                
+                for (let i = 0; i < 50; i++) {
+                    const span = document.createElement('span');
+                    span.className = 'matrix-char';
+                    span.textContent = chars[Math.floor(Math.random() * chars.length)];
+                    span.style.left = Math.random() * 100 + '%';
+                    span.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    span.style.animationDelay = Math.random() * 2 + 's';
+                    matrixBg.appendChild(span);
+                }
+            }
 
-        function updateUI() {
-            balanceEl.innerHTML = `<span class="currency-symbol">${balance.toFixed(4)}</span> LalTC`;
-            hashRateEl.textContent = `${calculateHashRate().toFixed(2)} H/s`;
-            incomeRateEl.innerHTML = `<span class="currency-symbol">${calculateIncomeRate().toFixed(4)}</span> LalTC/s`;
-            difficultyEl.textContent = difficulty.toFixed(2);
-            cpuLevelEl.textContent = cpuLevel;
-            gpuLevelEl.textContent = gpuLevel;
-            cpuCostEl.innerHTML = `<span class="currency-symbol">${(1 + cpuLevel * 0.5).toFixed(4)}</span>`;
-            gpuCostEl.innerHTML = `<span class="currency-symbol">${(5 + gpuLevel * 1.5).toFixed(4)}</span>`;
+            toggleMining() {
+                if (this.isMining) {
+                    this.stopMining();
+                } else {
+                    this.startMining();
+                }
+            }
 
-            // Обновление кнопок покупки
-            buyCpuBtn.disabled = balance < (1 + cpuLevel * 0.5);
-            buyGpuBtn.disabled = balance < (5 + gpuLevel * 1.5);
+            startMining() {
+                this.isMining = true;
+                this.startTime = Date.now();
+                this.elements.miningButton.textContent = 'Остановить майнинг';
+                this.elements.miningButton.style.background = 'linear-gradient(45deg, #dc3545, #c82333)';
+                
+                this.addLogEntry('Майнинг запущен! Поиск блоков lalTC...');
+                this.playSound('start');
+                
+                this.miningInterval = setInterval(() => this.mineBlock(), 100);
+                this.uptimeInterval = setInterval(() => this.updateUptime(), 1000);
+            }
 
-            hashProgressEl.style.width = `${(currentHash / (targetHash * difficulty)) * 100}%`;
-        }
+            stopMining() {
+                this.isMining = false;
+                this.elements.miningButton.textContent = 'Начать майнинг';
+                this.elements.miningButton.style.background = 'linear-gradient(45deg, #4a9eff, #3d7dd6)';
+                
+                clearInterval(this.miningInterval);
+                clearInterval(this.uptimeInterval);
+                
+                this.currentHashrate = 0;
+                this.powerUsage = 0;
+                this.blockProgress = 0;
+                
+                this.addLogEntry('Майнинг остановлен');
+                this.updateDisplay();
+            }
 
-        function addLog(message) {
-            const logEntry = document.createElement('div');
-            logEntry.classList.add('log-entry');
-            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            mineBlock() {
+                // Симуляция реального майнинга с переменной сложностью
+                const baseSpeed = 0.3 + Math.random() * 0.7;
+                this.blockProgress += baseSpeed;
+                
+                // Обновляем хешрейт с реалистичными колебаниями
+                const baseHashrate = 356.1; // Суммарный хешрейт всех GPU
+                this.currentHashrate = baseHashrate + (Math.random() - 0.5) * 20;
+                this.powerUsage = 865 + Math.random() * 50; // Базовое потребление + вариации
+                
+                if (this.blockProgress >= 100) {
+                    this.completeBlock();
+                }
+                
+                this.updateDisplay();
+            }
+
+            completeBlock() {
+                this.blockProgress = 0;
+                this.totalBlocks++;
+                
+                // Реалистичная награда за блок (0.001 - 0.01 lalTC)
+                const reward = 0.001 + Math.random() * 0.009;
+                this.balance += reward;
+                
+                this.addLogEntry(`Блок #${this.totalBlocks} найден! Награда: ${reward.toFixed(6)} lalTC`);
+                this.playSound('block');
+                
+                // Сохраняем прогресс
+                localStorage.setItem('lalTC_balance', this.balance.toString());
+                localStorage.setItem('lalTC_blocks', this.totalBlocks.toString());
+            }
+
+            updateDisplay() {
+                this.elements.balance.textContent = `${this.balance.toFixed(6)}`;
+                if (this.elements.usdBalance) {
+                    this.elements.usdBalance.textContent = `$${this.usdBalance.toFixed(2)}`;
+                }
+                this.elements.hashrate.textContent = `${this.currentHashrate.toFixed(1)} MH/s`;
+                this.elements.blocksFound.textContent = this.totalBlocks;
+                this.elements.powerUsage.textContent = `${this.powerUsage.toFixed(0)} W`;
+                this.elements.blockProgress.textContent = `${this.blockProgress.toFixed(1)}%`;
+                this.elements.progressFill.style.width = `${this.blockProgress}%`;
+                this.elements.price.textContent = this.price.toFixed(2);
+                
+                // Update electricity costs
+                if (this.elements.electricityRate) {
+                    this.elements.electricityRate.textContent = this.electricityRate.toFixed(2);
+                }
+                if (this.elements.hourlyCost) {
+                    const hourlyCost = (this.powerUsage / 1000) * this.electricityRate;
+                    this.elements.hourlyCost.textContent = `$${hourlyCost.toFixed(3)}`;
+                }
+                if (this.elements.totalElectricityCost) {
+                    this.elements.totalElectricityCost.textContent = `$${this.totalElectricityCost.toFixed(2)}`;
+                }
+            }
+
+            updateUptime() {
+                if (!this.startTime) return;
+                
+                const uptime = Date.now() - this.startTime;
+                const hours = Math.floor(uptime / 3600000);
+                const minutes = Math.floor((uptime % 3600000) / 60000);
+                const seconds = Math.floor((uptime % 60000) / 1000);
+                
+                this.elements.uptime.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            startPriceFluctuation() {
+                setInterval(() => {
+                    // Реалистичные колебания курса
+                    const change = (Math.random() - 0.5) * 200;
+                    this.price += change;
+                    this.price = Math.max(45000, Math.min(50000, this.price)); // Ограничиваем диапазон
+                    this.updateDisplay();
+                }, 5000);
+            }
+
+            startHardwareMonitoring() {
+                setInterval(() => {
+                    this.updateHardwareStats();
+                }, 2000);
+            }
+
+            updateHardwareStats() {
+                // Обновляем общий хешрейт и потребление на основе всех GPU
+                let totalHash = 0;
+                let totalPower = 0;
+                
+                this.ownedGpus.forEach(gpu => {
+                    const gpuSpec = this.gpuDatabase[gpu.type];
+                    if (gpuSpec) {
+                        totalHash += gpuSpec.hashrate;
+                        totalPower += gpuSpec.power;
+                    }
+                });
+                
+                if (this.isMining) {
+                    this.currentHashrate = totalHash + (Math.random() - 0.5) * 20;
+                    this.powerUsage = totalPower + Math.random() * 50;
+                } else {
+                    this.currentHashrate = 0;
+                    this.powerUsage = 0;
+                }
+                
+                // Обновляем статистику для каждой купленной видеокарты
+                this.ownedGpus.forEach((gpu, index) => {
+                    const hashElement = document.getElementById(`gpu${index}Hash`);
+                    const tempElement = document.getElementById(`gpu${index}Temp`);
+                    const powerElement = document.getElementById(`gpu${index}Power`);
+                    
+                    if (hashElement && tempElement && powerElement) {
+                        const gpuSpec = this.gpuDatabase[gpu.type];
+                        const hashVariation = (Math.random() - 0.5) * 10;
+                        const tempVariation = this.isMining ? (Math.random() - 0.5) * 8 : -2;
+                        const powerVariation = this.isMining ? (Math.random() - 0.5) * 30 : -gpuSpec.power * 0.9;
+                        
+                        const currentHash = gpuSpec.hashrate + hashVariation;
+                        const currentTemp = 65 + tempVariation + (this.isMining ? 10 : 0);
+                        const currentPower = gpuSpec.power + powerVariation;
+                        
+                        hashElement.textContent = `${currentHash.toFixed(1)} MH/s`;
+                        powerElement.textContent = `${Math.max(0, currentPower).toFixed(0)}W`;
+                        tempElement.textContent = `${currentTemp.toFixed(0)}°C`;
+                        
+                        if (currentTemp > 80) {
+                            tempElement.classList.add('hot');
+                        } else {
+                            tempElement.classList.remove('hot');
+                        }
+                    }
+                });
+            }
+
+            addLogEntry(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+                
+                this.elements.miningLog.appendChild(entry);
+                this.elements.miningLog.scrollTop = this.elements.miningLog.scrollHeight;
+                
+                // Ограничиваем количество записей в логе
+                if (this.elements.miningLog.children.length > 50) {
+                    this.elements.miningLog.removeChild(this.elements.miningLog.firstChild);
+                }
+            }
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const soundIcon = this.soundEnabled ? 
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 4px;"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#b0b0b0" stroke-width="2" fill="none"/><path d="M19.07 4.93C20.9 6.76 22 9.3 22 12C22 14.7 20.9 17.24 19.07 19.07M15.54 8.46C16.4 9.32 17 10.6 17 12C17 13.4 16.4 14.68 15.54 15.54" stroke="#b0b0b0" stroke-width="2" fill="none"/></svg>' :
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 4px;"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#b0b0b0" stroke-width="2" fill="none"/><path d="M23 9L17 15M17 9L23 15" stroke="#b0b0b0" stroke-width="2" fill="none"/></svg>';
+                this.elements.soundToggle.innerHTML = soundIcon + (this.soundEnabled ? 'Звук ВКЛ' : 'Звук ВЫКЛ');
+            }
+
+            playSound(type) {
+                if (!this.soundEnabled) return;
+                
+                // Создаем простые звуковые эффекты с Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                if (type === 'start') {
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.5);
+                } else if (type === 'block') {
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.2);
+                }
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
             
-            if (logContainer.children.length >= logLimit) {
-                logContainer.removeChild(logContainer.firstChild);
-            }
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-
-        function mine() {
-            const hashRate = calculateHashRate();
-            currentHash += hashRate;
-
-            if (currentHash >= targetHash * difficulty) {
-                const reward = blockReward / difficulty;
-                balance += reward;
-                currentHash = 0;
-                difficulty += difficultyIncreaseFactor; // Увеличиваем сложность
-                addLog(`Найден блок! Вы получили ${reward.toFixed(4)} LalTC. Сложность выросла до ${difficulty.toFixed(2)}.`);
-            }
-
-            updateUI();
-            saveGame();
-        }
-
-        function buyUpgrade(type) {
-            let cost = 0;
-            if (type === 'cpu') {
-                cost = 1 + cpuLevel * 0.5;
-                if (balance >= cost) {
-                    balance -= cost;
-                    cpuLevel++;
-                    addLog(`Улучшен CPU до уровня ${cpuLevel}. Стоимость: ${cost.toFixed(4)} LalTC.`);
-                }
-            } else if (type === 'gpu') {
-                cost = 5 + gpuLevel * 1.5;
-                if (balance >= cost) {
-                    balance -= cost;
-                    gpuLevel++;
-                    addLog(`Улучшен GPU до уровня ${gpuLevel}. Стоимость: ${cost.toFixed(4)} LalTC.`);
+            renderOwnedGpus() {
+                if (!this.elements.ownedGpuGrid) return;
+                
+                this.elements.ownedGpuGrid.innerHTML = '';
+                
+                this.ownedGpus.forEach((gpu, index) => {
+                    const gpuSpec = this.gpuDatabase[gpu.type];
+                    const gpuElement = document.createElement('div');
+                    gpuElement.className = 'hardware-item';
+                    gpuElement.innerHTML = `
+                        <div class="hardware-name">${gpuSpec.name}</div>
+                        <svg class="gpu-visual" viewBox="0 0 200 60" style="width: 100%; height: 50px; margin: 8px 0;">
+                            <rect x="10" y="10" width="180" height="40" rx="5" fill="#2a4a2a" stroke="#4a9eff"/>
+                            <rect x="20" y="15" width="20" height="30" fill="#1a3a1a"/>
+                            <rect x="50" y="20" width="100" height="20" fill="#1a3a1a"/>
+                            <circle cx="170" cy="30" r="8" fill="#4a9eff"/>
+                            <text x="100" y="35" text-anchor="middle" fill="#4a9eff" font-size="8">${gpu.type.toUpperCase()}</text>
+                        </svg>
+                        <div class="hardware-stats">
+                            Хешрейт: <span id="gpu${index}Hash">${gpuSpec.hashrate.toFixed(1)} MH/s</span><br>
+                            Температура: <span class="temperature" id="gpu${index}Temp">65°C</span><br>
+                            Потребление: <span id="gpu${index}Power">${gpuSpec.power}W</span>
+                        </div>
+                    `;
+                    this.elements.ownedGpuGrid.appendChild(gpuElement);
+                });
+                
+                if (this.ownedGpus.length === 0) {
+                    this.elements.ownedGpuGrid.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Купите видеокарты в магазине для начала майнинга</div>';
                 }
             }
-            updateUI();
-            saveGame();
-        }
-
-        function saveGame() {
-            const gameData = {
-                balance,
-                cpuLevel,
-                gpuLevel,
-                difficulty,
-                currentHash,
-            };
-            localStorage.setItem('lalTCSimulator', JSON.stringify(gameData));
-        }
-
-        function loadGame() {
-            const savedData = localStorage.getItem('lalTCSimulator');
-            if (savedData) {
-                const gameData = JSON.parse(savedData);
-                balance = gameData.balance;
-                cpuLevel = gameData.cpuLevel;
-                gpuLevel = gameData.gpuLevel;
-                difficulty = gameData.difficulty;
-                currentHash = gameData.currentHash;
-                addLog("Прогресс загружен.");
-            } else {
-                addLog("Новая игра начата.");
+            
+            sellCrypto() {
+                if (this.balance < 0.001) {
+                    this.addLogEntry('Недостаточно lalTC для продажи');
+                    return;
+                }
+                
+                const sellAmount = Math.min(this.balance, 0.01);
+                const usdAmount = sellAmount * this.price;
+                
+                this.balance -= sellAmount;
+                this.usdBalance += usdAmount;
+                
+                this.addLogEntry(`Продано ${sellAmount.toFixed(6)} lalTC за $${usdAmount.toFixed(2)}`);
+                this.saveProgress();
+                this.updateDisplay();
             }
-            updateUI();
+            
+            payElectricity() {
+                if (this.totalElectricityCost <= 0) {
+                    this.addLogEntry('Нет задолженности по электричеству');
+                    return;
+                }
+                
+                if (this.usdBalance < this.totalElectricityCost) {
+                    this.addLogEntry('Недостаточно долларов для оплаты счёта');
+                    return;
+                }
+                
+                const amount = this.totalElectricityCost;
+                this.usdBalance -= amount;
+                this.totalElectricityCost = 0;
+                
+                this.addLogEntry(`Оплачен счёт за электричество: $${amount.toFixed(2)}`);
+                this.saveProgress();
+                this.updateDisplay();
+            }
+            
+            buyGpu(gpuType) {
+                const gpuSpec = this.gpuDatabase[gpuType];
+                if (!gpuSpec) return;
+                
+                if (this.usdBalance < gpuSpec.price) {
+                    this.addLogEntry(`Недостаточно долларов для покупки ${gpuSpec.name}`);
+                    return;
+                }
+                
+                this.usdBalance -= gpuSpec.price;
+                this.ownedGpus.push({ type: gpuType, id: Date.now() });
+                
+                this.addLogEntry(`Куплена видеокарта ${gpuSpec.name} за $${gpuSpec.price}`);
+                this.renderOwnedGpus();
+                this.saveProgress();
+                this.updateDisplay();
+            }
+            
+            startElectricityCharging() {
+                setInterval(() => {
+                    if (this.isMining && this.powerUsage > 0) {
+                        const hourlyCost = (this.powerUsage / 1000) * this.electricityRate;
+                        this.totalElectricityCost += hourlyCost / 3600;
+                        
+                        if (Math.floor(Date.now() / 1000) % 10 === 0) {
+                            localStorage.setItem('electricity_cost', this.totalElectricityCost.toString());
+                        }
+                    }
+                }, 1000);
+            }
+            
+            saveProgress() {
+                localStorage.setItem('lalTC_balance', this.balance.toString());
+                localStorage.setItem('usd_balance', this.usdBalance.toString());
+                localStorage.setItem('lalTC_blocks', this.totalBlocks.toString());
+                localStorage.setItem('electricity_cost', this.totalElectricityCost.toString());
+                localStorage.setItem('owned_gpus', JSON.stringify(this.ownedGpus));
+            }
         }
 
-        // Обработчики событий
-        buyCpuBtn.addEventListener('click', () => buyUpgrade('cpu'));
-        buyGpuBtn.addEventListener('click', () => buyUpgrade('gpu'));
-
-        // Запуск игры
-        loadGame();
-        setInterval(mine, 100); // Майнинг каждые 100 мс
+        // Инициализация приложения при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            new LalTCMiner();
+        });
     </script>
 </body>
 </html>
