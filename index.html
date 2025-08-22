@@ -3,47 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Checker</title>
+  <title>Bitcoin Mining Simulator</title>
   <style>
     body {
       margin: 0;
       height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      font-family: Arial, sans-serif;
-      color: white;
-      background: linear-gradient(45deg, #000000, #1e90ff, #8a2be2, #ffffff10);
-      animation: rotateGradient 10s linear infinite;
+      font-family: 'Courier New', monospace;
+      color: #00ffcc;
+      background: radial-gradient(circle at 50% 50%, #0a0a1a 0%, #2a0040 100%);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     }
-    .message {
-      text-align: center;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 10px;
+    .clicker {
+      padding: 15px 30px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.3s ease, color 0.3s ease;
+      text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
     }
-    @keyframes rotateGradient {
-      0% { background: linear-gradient(0deg, #000000, #1e90ff, #8a2be2, #ffffff10); }
-      100% { background: linear-gradient(360deg, #000000, #1e90ff, #8a2be2, #ffffff10); }
+    .clicker:hover {
+      transform: scale(1.2); /* Увеличение размера в 1.2x (20% больше) */
+      color: #00ff99;
+      text-shadow: 0 0 15px #00ff99, 0 0 30px #00ff99;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
 <body>
-  <div class="message" id="deviceMessage">Checking device...</div>
+  <div class="clicker" id="clickerText">BTC: 0</div>
 
   <script>
-    function detectDevice() {
-      const width = window.innerWidth;
-      const messageElement = document.getElementById('deviceMessage');
-      if (width <= 768) {
-        messageElement.textContent = 'You are using a phone!';
-      } else {
-        messageElement.textContent = 'You are using a PC!';
-      }
-    }
-    // Run on load and resize
-    window.addEventListener('load', detectDevice);
-    window.addEventListener('resize', detectDevice);
+    const clicker = document.getElementById('clickerText');
+    let btcCount = 0;
+
+    clicker.addEventListener('click', () => {
+      let bonus = 1;
+      const random = Math.random();
+      if (random < 0.1) bonus = 5; // 10% шанс х5
+      else if (random < 0.3) bonus = 2; // 20% шанс х2
+      btcCount += bonus;
+      clicker.textContent = `BTC: ${btcCount}`;
+      clicker.style.animation = 'pulse 0.3s ease';
+      setTimeout(() => {
+        clicker.style.animation = '';
+      }, 300);
+    });
   </script>
 </body>
 </html>
