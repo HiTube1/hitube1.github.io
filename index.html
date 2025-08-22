@@ -3,326 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Code Runner</title>
+    <title>Симулятор майнинга LalTC</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 40px 20px;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            line-height: 1.6;
         }
 
         .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 900px;
+            width: 90%;
+            max-width: 800px;
+            background-color: #1e1e1e;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 1s ease-in-out;
         }
 
         h1 {
-            color: #2c3e50;
-            margin-bottom: 25px;
+            color: #66ff66;
             text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(102, 255, 102, 0.4);
         }
 
-        .section {
+        .stats, .upgrade-section, .log {
             margin-bottom: 25px;
+            padding: 20px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            border-left: 5px solid #66ff66;
         }
 
         h2 {
-            font-size: 1.2rem;
-            color: #555;
+            color: #99ff99;
+            margin-top: 0;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 10px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 5px;
         }
 
-        #python-code, #file-content {
+        .progress-bar {
             width: 100%;
-            height: 200px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            background-color: #f9f9f9;
-            resize: vertical;
-            transition: border-color 0.3s;
-        }
-        
-        #python-code:focus, #file-content:focus {
-            border-color: #3498db;
-            outline: none;
+            height: 20px;
+            background-color: #444;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
         }
 
-        .button-group {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 15px;
+        .progress {
+            height: 100%;
+            background-color: #66ff66;
+            width: 0%;
+            transition: width 0.1s linear;
         }
 
-        .input-group {
+        .upgrade-item {
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
             align-items: center;
-        }
-        
-        #install-package {
-            flex-grow: 1;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            border-bottom: 1px solid #444;
         }
 
-        button {
-            padding: 12px 25px;
+        .upgrade-item:last-child {
+            border-bottom: none;
+        }
+
+        .upgrade-item button {
+            background-color: #66ff66;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            color: #1e1e1e;
+            font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            font-weight: 600;
+            transition: background-color 0.3s;
         }
 
-        #run-btn {
-            background-color: #3498db;
-            color: white;
+        .upgrade-item button:hover {
+            background-color: #33cc33;
         }
-        
-        #run-btn:disabled, #save-file-btn:disabled, #install-btn:disabled {
-            background-color: #bdc3c7;
+
+        .upgrade-item button:disabled {
+            background-color: #555;
             cursor: not-allowed;
+            color: #aaa;
         }
 
-        #run-btn:not(:disabled):hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-        }
-        
-        #save-file-btn {
-            background-color: #2ecc71;
-            color: white;
+        .log-entry {
+            margin-bottom: 5px;
+            color: #b0b0b0;
         }
 
-        #install-btn {
-            background-color: #f39c12;
-            color: white;
-            padding: 10px 20px;
-        }
-        
-        #save-file-btn:hover, #install-btn:hover {
-            background-color: #27ae60;
-            transform: translateY(-2px);
-        }
-        
-        #clear-output-btn {
-            background-color: #e74c3c;
-            color: white;
-        }
-        
-        #clear-output-btn:hover {
-            background-color: #c0392b;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        #output {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            min-height: 100px;
-            font-family: 'Courier New', Courier, monospace;
-            overflow-y: auto;
-            max-height: 400px;
-        }
-
-        .loading-text {
-            color: #3498db;
-            text-align: center;
-            font-style: italic;
-            margin-top: 15px;
+        .currency-symbol {
+            color: #66ff66;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Python Code Runner 🐍</h1>
+    <div class="container">
+        <h1>Симулятор майнинга LalTC</h1>
+        <div class="stats">
+            <h2>Статистика майнинга</h2>
+            <div class="stat-item">
+                <span>Баланс:</span> <span id="balance"><span class="currency-symbol">0.0000</span> LalTC</span>
+            </div>
+            <div class="stat-item">
+                <span>Скорость хэширования:</span> <span id="hashRate">0 H/s</span>
+            </div>
+            <div class="stat-item">
+                <span>Доходность:</span> <span id="incomeRate">0.0000 LalTC/s</span>
+            </div>
+            <div class="stat-item">
+                <span>Сложность сети:</span> <span id="difficulty">1.00</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress" id="hashProgress"></div>
+            </div>
+        </div>
 
-    <div class="section">
-        <h2>Установка библиотек</h2>
-        <div class="input-group">
-            <input type="text" id="install-package" placeholder="Имя библиотеки (e.g., numpy, pandas)">
-            <button id="install-btn">Установить</button>
+        <div class="upgrade-section">
+            <h2>Магазин улучшений</h2>
+            <div class="upgrade-item">
+                <span><i class="currency-symbol">CPU </i> (уровень <span id="cpuLevel">1</span>)</span>
+                <button id="buyCpuBtn">Купить за <span id="cpuCost">1.0000</span> LalTC</button>
+            </div>
+            <div class="upgrade-item">
+                <span><i class="currency-symbol">GPU </i> (уровень <span id="gpuLevel">1</span>)</span>
+                <button id="buyGpuBtn">Купить за <span id="gpuCost">5.0000</span> LalTC</button>
+            </div>
+        </div>
+
+        <div class="log">
+            <h2>Лог</h2>
+            <div id="log-container"></div>
         </div>
     </div>
 
-    <div class="section">
-        <h2>Python Code</h2>
-        <textarea id="python-code" placeholder="Введите ваш Python код здесь..."></textarea>
-    </div>
+    <script>
+        // Игровые переменные
+        let balance = 0;
+        let cpuLevel = 1;
+        let gpuLevel = 1;
+        let baseHashRate = 1; // Базовый хэшрейт для CPU
+        let cpuMultiplier = 1;
+        let gpuMultiplier = 5; // GPU дает больше, чем CPU
+        let currentHash = 0;
+        let targetHash = 100;
+        let difficulty = 1.0;
+        let difficultyIncreaseFactor = 0.01; // Насколько увеличивается сложность за каждый блок
+        let blockReward = 10;
+        let logLimit = 15;
 
-    <div class="section">
-        <h2>Virtual File (e.g., test.txt)</h2>
-        <input type="text" id="file-name" placeholder="Имя файла (e.g., test.txt)">
-        <textarea id="file-content" placeholder="Содержимое файла..."></textarea>
-        <div class="button-group">
-            <button id="save-file-btn">Сохранить файл</button>
-        </div>
-    </div>
+        // Элементы DOM
+        const balanceEl = document.getElementById('balance');
+        const hashRateEl = document.getElementById('hashRate');
+        const incomeRateEl = document.getElementById('incomeRate');
+        const difficultyEl = document.getElementById('difficulty');
+        const hashProgressEl = document.getElementById('hashProgress');
+        const cpuLevelEl = document.getElementById('cpuLevel');
+        const gpuLevelEl = document.getElementById('gpuLevel');
+        const cpuCostEl = document.getElementById('cpuCost');
+        const gpuCostEl = document.getElementById('gpuCost');
+        const buyCpuBtn = document.getElementById('buyCpuBtn');
+        const buyGpuBtn = document.getElementById('buyGpuBtn');
+        const logContainer = document.getElementById('log-container');
 
-    <div class="button-group">
-        <button id="run-btn">Запустить</button>
-        <button id="clear-output-btn">Очистить вывод</button>
-    </div>
-
-    <div id="loading" class="loading-text" style="display:none;">
-        Загрузка Pyodide, пожалуйста, подождите...
-    </div>
-
-    <div class="section">
-        <h2>Вывод:</h2>
-        <pre id="output"></pre>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-<script>
-    let pyodide;
-    const runBtn = document.getElementById('run-btn');
-    const saveFileBtn = document.getElementById('save-file-btn');
-    const clearOutputBtn = document.getElementById('clear-output-btn');
-    const installBtn = document.getElementById('install-btn');
-    const pythonCode = document.getElementById('python-code');
-    const fileNameInput = document.getElementById('file-name');
-    const fileContentArea = document.getElementById('file-content');
-    const installPackageInput = document.getElementById('install-package');
-    const output = document.getElementById('output');
-    const loadingText = document.getElementById('loading');
-
-    async function initializePyodide() {
-        loadingText.style.display = 'block';
-        runBtn.disabled = true;
-        saveFileBtn.disabled = true;
-        installBtn.disabled = true;
-        try {
-            pyodide = await loadPyodide({
-                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"
-            });
-            output.textContent = "Pyodide загружен и готов к работе!";
-            console.log("Pyodide загружен и готов!");
-        } catch (error) {
-            output.textContent = `Ошибка при загрузке Pyodide: ${error.message}. Пожалуйста, проверьте ваше интернет-соединение или URL Pyodide.`;
-            console.error("Ошибка при загрузке Pyodide:", error);
-        } finally {
-            loadingText.style.display = 'none';
-            runBtn.disabled = false;
-            saveFileBtn.disabled = false;
-            installBtn.disabled = false;
-        }
-    }
-
-    initializePyodide();
-
-    runBtn.addEventListener('click', async () => {
-        if (!pyodide) {
-            output.textContent = "Pyodide ещё не загружен. Пожалуйста, подождите...";
-            return;
+        // Функции
+        function calculateHashRate() {
+            // Реалистичная формула: (Базовый_хэшрейт * Множитель_CPU) + (Множитель_GPU)
+            return (baseHashRate * cpuLevel * cpuMultiplier) + (gpuLevel * gpuMultiplier);
         }
 
-        const code = pythonCode.value;
-        if (!code.trim()) {
-            output.textContent = "Пожалуйста, введите код для запуска.";
-            return;
+        function calculateIncomeRate() {
+            // Доходность в секунду: (Награда за блок / Целевое хэширование) * Хэшрейт
+            // Это приблизительная формула, но она дает представление о доходе в реальном времени.
+            return (blockReward / targetHash) * calculateHashRate();
         }
 
-        output.textContent = "Запуск кода...\n";
-        runBtn.disabled = true;
-        
-        try {
-            let scriptOutput = '';
-            pyodide.setStdout({
-                batched: (text) => { scriptOutput += text + '\n'; }
-            });
-            pyodide.setStderr({
-                batched: (text) => { scriptOutput += "Ошибка: " + text + '\n'; }
-            });
+        function updateUI() {
+            balanceEl.innerHTML = `<span class="currency-symbol">${balance.toFixed(4)}</span> LalTC`;
+            hashRateEl.textContent = `${calculateHashRate().toFixed(2)} H/s`;
+            incomeRateEl.innerHTML = `<span class="currency-symbol">${calculateIncomeRate().toFixed(4)}</span> LalTC/s`;
+            difficultyEl.textContent = difficulty.toFixed(2);
+            cpuLevelEl.textContent = cpuLevel;
+            gpuLevelEl.textContent = gpuLevel;
+            cpuCostEl.innerHTML = `<span class="currency-symbol">${(1 + cpuLevel * 0.5).toFixed(4)}</span>`;
+            gpuCostEl.innerHTML = `<span class="currency-symbol">${(5 + gpuLevel * 1.5).toFixed(4)}</span>`;
 
-            await pyodide.runPythonAsync(code);
-            output.textContent += scriptOutput;
-            output.scrollTop = output.scrollHeight;
-        } catch (error) {
-            output.textContent += "\nПроизошла ошибка выполнения: " + error.message;
-            console.error("Ошибка выполнения:", error);
-        } finally {
-            runBtn.disabled = false;
-            pyodide.setStdout({});
-            pyodide.setStderr({});
-        }
-    });
+            // Обновление кнопок покупки
+            buyCpuBtn.disabled = balance < (1 + cpuLevel * 0.5);
+            buyGpuBtn.disabled = balance < (5 + gpuLevel * 1.5);
 
-    saveFileBtn.addEventListener('click', () => {
-        if (!pyodide) {
-            output.textContent = "Pyodide ещё не загружен.";
-            return;
-        }
-        
-        const fileName = fileNameInput.value.trim();
-        const fileContent = fileContentArea.value;
-
-        if (!fileName) {
-            output.textContent = "Пожалуйста, введите имя файла.";
-            return;
+            hashProgressEl.style.width = `${(currentHash / (targetHash * difficulty)) * 100}%`;
         }
 
-        try {
-            pyodide.FS.writeFile(fileName, fileContent, { encoding: "utf8" });
-            output.textContent = `Файл '${fileName}' успешно сохранён в виртуальной файловой системе.`;
-        } catch (error) {
-            output.textContent = `Ошибка при сохранении файла: ${error.message}`;
-            console.error("Ошибка при сохранении файла:", error);
-        }
-    });
-    
-    installBtn.addEventListener('click', async () => {
-        if (!pyodide) {
-            output.textContent = "Pyodide ещё не загружен. Пожалуйста, подождите...";
-            return;
+        function addLog(message) {
+            const logEntry = document.createElement('div');
+            logEntry.classList.add('log-entry');
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            if (logContainer.children.length >= logLimit) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
         }
 
-        const packageName = installPackageInput.value.trim();
-        if (!packageName) {
-            output.textContent = "Пожалуйста, введите имя библиотеки для установки.";
-            return;
+        function mine() {
+            const hashRate = calculateHashRate();
+            currentHash += hashRate;
+
+            if (currentHash >= targetHash * difficulty) {
+                const reward = blockReward / difficulty;
+                balance += reward;
+                currentHash = 0;
+                difficulty += difficultyIncreaseFactor; // Увеличиваем сложность
+                addLog(`Найден блок! Вы получили ${reward.toFixed(4)} LalTC. Сложность выросла до ${difficulty.toFixed(2)}.`);
+            }
+
+            updateUI();
+            saveGame();
         }
 
-        output.textContent = `Установка библиотеки '${packageName}'... Это может занять несколько секунд.\n`;
-        installBtn.disabled = true;
-        runBtn.disabled = true;
-
-        try {
-            await pyodide.loadPackage(packageName);
-            output.textContent += `Библиотека '${packageName}' успешно установлена.`;
-        } catch (error) {
-            output.textContent += `\nНе удалось установить библиотеку '${packageName}': ${error.message}`;
-            console.error("Ошибка установки:", error);
-        } finally {
-            installBtn.disabled = false;
-            runBtn.disabled = false;
+        function buyUpgrade(type) {
+            let cost = 0;
+            if (type === 'cpu') {
+                cost = 1 + cpuLevel * 0.5;
+                if (balance >= cost) {
+                    balance -= cost;
+                    cpuLevel++;
+                    addLog(`Улучшен CPU до уровня ${cpuLevel}. Стоимость: ${cost.toFixed(4)} LalTC.`);
+                }
+            } else if (type === 'gpu') {
+                cost = 5 + gpuLevel * 1.5;
+                if (balance >= cost) {
+                    balance -= cost;
+                    gpuLevel++;
+                    addLog(`Улучшен GPU до уровня ${gpuLevel}. Стоимость: ${cost.toFixed(4)} LalTC.`);
+                }
+            }
+            updateUI();
+            saveGame();
         }
-    });
-    
-    clearOutputBtn.addEventListener('click', () => {
-        output.textContent = '';
-    });
-</script>
 
+        function saveGame() {
+            const gameData = {
+                balance,
+                cpuLevel,
+                gpuLevel,
+                difficulty,
+                currentHash,
+            };
+            localStorage.setItem('lalTCSimulator', JSON.stringify(gameData));
+        }
+
+        function loadGame() {
+            const savedData = localStorage.getItem('lalTCSimulator');
+            if (savedData) {
+                const gameData = JSON.parse(savedData);
+                balance = gameData.balance;
+                cpuLevel = gameData.cpuLevel;
+                gpuLevel = gameData.gpuLevel;
+                difficulty = gameData.difficulty;
+                currentHash = gameData.currentHash;
+                addLog("Прогресс загружен.");
+            } else {
+                addLog("Новая игра начата.");
+            }
+            updateUI();
+        }
+
+        // Обработчики событий
+        buyCpuBtn.addEventListener('click', () => buyUpgrade('cpu'));
+        buyGpuBtn.addEventListener('click', () => buyUpgrade('gpu'));
+
+        // Запуск игры
+        loadGame();
+        setInterval(mine, 100); // Майнинг каждые 100 мс
+    </script>
 </body>
 </html>
