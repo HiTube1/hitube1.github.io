@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitcoin Mining Simulator</title>
+  <title>Терминатор симулятор</title>
   <style>
     body {
       margin: 0;
@@ -42,7 +42,7 @@
   </style>
 </head>
 <body>
-  <div class="clicker" id="clickerText">BTC: 0</div>
+  <div class="clicker" id="clickerText">Terminatorpedic: 0</div>
 
   <script>
     const clicker = document.getElementById('clickerText');
@@ -54,7 +54,7 @@
       if (random < 0.1) bonus = 5; // 10% шанс х5
       else if (random < 0.3) bonus = 2; // 20% шанс х2
       btcCount += bonus;
-      clicker.textContent = `BTC: ${btcCount}`;
+      clicker.textContent = `Terminatorpedic: ${btcCount}`;
       clicker.style.animation = 'pulse 0.3s ease';
       setTimeout(() => {
         clicker.style.animation = '';
