@@ -3,31 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red Site</title>
+  <title>Device Checker</title>
   <style>
     body {
-      background-color: red;
       margin: 0;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-    h1 {
-      color: white;
       font-family: Arial, sans-serif;
+      color: white;
+      animation: gradientShift 10s ease infinite;
+    }
+    .message {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+    }
+    @keyframes gradientShift {
+      0% { background: linear-gradient(45deg, #000000, #1e90ff, #8a2be2, #ffffff10); }
+      25% { background: linear-gradient(45deg, #1e90ff, #8a2be2, #ffffff10, #000000); }
+      50% { background: linear-gradient(45deg, #8a2be2, #ffffff10, #000000, #1e90ff); }
+      75% { background: linear-gradient(45deg, #ffffff10, #000000, #1e90ff, #8a2be2); }
+      100% { background: linear-gradient(45deg, #000000, #1e90ff, #8a2be2, #ffffff10); }
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to My Red Site!</h1>
+  <div class="message" id="deviceMessage">Checking device...</div>
 
   <script>
-    function changeText() {
-      const h1 = document.querySelector('h1');
-      h1.textContent = 'Red is cool! ' + new Date().toLocaleTimeString();
+    function detectDevice() {
+      const width = window.innerWidth;
+      const messageElement = document.getElementById('deviceMessage');
+      if (width <= 768) {
+        messageElement.textContent = 'You are using a phone!';
+      } else {
+        messageElement.textContent = 'You are using a PC!';
+      }
     }
-    setInterval(changeText, 1000);
+    // Run on load and resize
+    window.addEventListener('load', detectDevice);
+    window.addEventListener('resize', detectDevice);
   </script>
 </body>
 </html>
