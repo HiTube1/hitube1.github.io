@@ -1,65 +1,197 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>терминатора симулятор</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Courier New', monospace;
-      color: #00ffcc;
-      background: radial-gradient(circle at 50% 50%, #0a0a1a 0%, #2a0040 100%);
-      overflow: hidden;
-      user-select: none;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-    }
-    .clicker {
-      padding: 15px 30px;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 5px;
-      cursor: pointer;
-      transition: transform 0.3s ease, color 0.3s ease;
-      text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
-    }
-    .clicker:hover {
-      transform: scale(1.2); /* Увеличение размера в 1.2x (20% больше) */
-      color: #00ff99;
-      text-shadow: 0 0 15px #00ff99, 0 0 30px #00ff99;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Code Runner</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .code-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #python-code {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            background-color: #f9f9f9;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            font-weight: 600;
+        }
+
+        #run-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        #run-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #run-btn:not(:disabled):hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .output-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        #output {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            min-height: 50px;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+
+        .loading-text {
+            color: #3498db;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body>
-  <div class="clicker" id="clickerText">терминатор: 0</div>
 
-  <script>
-    const clicker = document.getElementById('clickerText');
-    let btcCount = 0;
+<div class="container">
+    <h1>Python Code Runner 🚀</h1>
+    <div class="code-area">
+        <textarea id="python-code" placeholder="Введите ваш Python код здесь..."></textarea>
+        <div class="button-group">
+            <button id="run-btn">Запустить</button>
+        </div>
+    </div>
+    <div id="loading" class="loading-text" style="display:none;">
+        Загрузка Pyodide, пожалуйста, подождите...
+    </div>
+    <div class="output-container">
+        <h2>Вывод:</h2>
+        <pre id="output"></pre>
+    </div>
+</div>
 
-    clicker.addEventListener('click', () => {
-      let bonus = 1;
-      const random = Math.random();
-      if (random < 0.1) bonus = 5; // 10% шанс х5
-      else if (random < 0.3) bonus = 2; // 20% шанс х2
-      btcCount += bonus;
-      clicker.textContent = `Terminatorpedic: ${btcCount}`;
-      clicker.style.animation = 'pulse 0.3s ease';
-      setTimeout(() => {
-        clicker.style.animation = '';
-      }, 300);
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+<script>
+    let pyodide;
+    const runBtn = document.getElementById('run-btn');
+    const pythonCode = document.getElementById('python-code');
+    const output = document.getElementById('output');
+    const loadingText = document.getElementById('loading');
+
+    // Функция для инициализации Pyodide
+    async function initializePyodide() {
+        loadingText.style.display = 'block';
+        runBtn.disabled = true;
+        try {
+            pyodide = await loadPyodide();
+            console.log("Pyodide загружен и готов!");
+            loadingText.style.display = 'none';
+            runBtn.disabled = false;
+        } catch (error) {
+            output.textContent = "Ошибка при загрузке Pyodide: " + error.message;
+            console.error("Ошибка при загрузке Pyodide:", error);
+        }
+    }
+
+    // Запуск инициализации при загрузке страницы
+    initializePyodide();
+
+    // Обработчик события для кнопки запуска
+    runBtn.addEventListener('click', async () => {
+        if (!pyodide) {
+            output.textContent = "Pyodide ещё не загружен. Пожалуйста, подождите...";
+            return;
+        }
+
+        const code = pythonCode.value;
+        if (!code.trim()) {
+            output.textContent = "Пожалуйста, введите код для запуска.";
+            return;
+        }
+
+        output.textContent = "Запуск кода...";
+        runBtn.disabled = true;
+
+        try {
+            // Перенаправляем stdout и stderr в консоль и на нашу страницу
+            pyodide.set
+            pyodide.set
+            pyodide.set
+            pyodide.setStdout({
+                batched: (text) => { output.textContent += text + '\n'; }
+            });
+            pyodide.setStderr({
+                batched: (text) => { output.textContent += "Ошибка: " + text + '\n'; }
+            });
+
+            // Запускаем код Python
+            await pyodide.runPythonAsync(code);
+            output.textContent = output.textContent.trim(); // Удаляем лишние пробелы в конце
+        } catch (error) {
+            output.textContent = "Произошла ошибка выполнения: " + error.message;
+            console.error("Ошибка выполнения:", error);
+        } finally {
+            runBtn.disabled = false;
+            // Возвращаем вывод в стандартное состояние
+            pyodide.setStdout({});
+            pyodide.setStderr({});
+        }
     });
-  </script>
+</script>
+
 </body>
 </html>
