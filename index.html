@@ -31,7 +31,7 @@
             text-align: center;
         }
 
-        .editor-section, .output-section {
+        .section {
             margin-bottom: 25px;
         }
 
@@ -67,7 +67,20 @@
             gap: 10px;
             margin-top: 15px;
         }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
         
+        #install-package {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
         button {
             padding: 12px 25px;
             border: none;
@@ -83,7 +96,7 @@
             color: white;
         }
         
-        #run-btn:disabled, #save-file-btn:disabled {
+        #run-btn:disabled, #save-file-btn:disabled, #install-btn:disabled {
             background-color: #bdc3c7;
             cursor: not-allowed;
         }
@@ -93,18 +106,25 @@
             transform: translateY(-2px);
         }
         
-        #save-file-btn, #clear-output-btn {
+        #save-file-btn {
             background-color: #2ecc71;
             color: white;
         }
+
+        #install-btn {
+            background-color: #f39c12;
+            color: white;
+            padding: 10px 20px;
+        }
         
-        #save-file-btn:hover, #clear-output-btn:hover {
+        #save-file-btn:hover, #install-btn:hover {
             background-color: #27ae60;
             transform: translateY(-2px);
         }
         
         #clear-output-btn {
             background-color: #e74c3c;
+            color: white;
         }
         
         #clear-output-btn:hover {
@@ -136,12 +156,20 @@
 <div class="container">
     <h1>Python Code Runner 🐍</h1>
 
-    <div class="editor-section">
+    <div class="section">
+        <h2>Установка библиотек</h2>
+        <div class="input-group">
+            <input type="text" id="install-package" placeholder="Имя библиотеки (e.g., numpy, pandas)">
+            <button id="install-btn">Установить</button>
+        </div>
+    </div>
+
+    <div class="section">
         <h2>Python Code</h2>
         <textarea id="python-code" placeholder="Введите ваш Python код здесь..."></textarea>
     </div>
 
-    <div class="editor-section">
+    <div class="section">
         <h2>Virtual File (e.g., test.txt)</h2>
         <input type="text" id="file-name" placeholder="Имя файла (e.g., test.txt)">
         <textarea id="file-content" placeholder="Содержимое файла..."></textarea>
@@ -159,7 +187,7 @@
         Загрузка Pyodide, пожалуйста, подождите...
     </div>
 
-    <div class="output-section">
+    <div class="section">
         <h2>Вывод:</h2>
         <pre id="output"></pre>
     </div>
@@ -171,19 +199,20 @@
     const runBtn = document.getElementById('run-btn');
     const saveFileBtn = document.getElementById('save-file-btn');
     const clearOutputBtn = document.getElementById('clear-output-btn');
+    const installBtn = document.getElementById('install-btn');
     const pythonCode = document.getElementById('python-code');
     const fileNameInput = document.getElementById('file-name');
     const fileContentArea = document.getElementById('file-content');
+    const installPackageInput = document.getElementById('install-package');
     const output = document.getElementById('output');
     const loadingText = document.getElementById('loading');
 
-    // Функция для инициализации Pyodide
     async function initializePyodide() {
         loadingText.style.display = 'block';
         runBtn.disabled = true;
         saveFileBtn.disabled = true;
+        installBtn.disabled = true;
         try {
-            // Убеждаемся, что Pyodide загружается правильно
             pyodide = await loadPyodide({
                 indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"
             });
@@ -196,13 +225,12 @@
             loadingText.style.display = 'none';
             runBtn.disabled = false;
             saveFileBtn.disabled = false;
+            installBtn.disabled = false;
         }
     }
 
-    // Запуск инициализации при загрузке страницы
     initializePyodide();
 
-    // Обработчик для кнопки "Запустить"
     runBtn.addEventListener('click', async () => {
         if (!pyodide) {
             output.textContent = "Pyodide ещё не загружен. Пожалуйста, подождите...";
@@ -219,7 +247,6 @@
         runBtn.disabled = true;
         
         try {
-            // Перенаправляем stdout и stderr
             let scriptOutput = '';
             pyodide.setStdout({
                 batched: (text) => { scriptOutput += text + '\n'; }
@@ -228,22 +255,19 @@
                 batched: (text) => { scriptOutput += "Ошибка: " + text + '\n'; }
             });
 
-            // Запускаем код Python
             await pyodide.runPythonAsync(code);
             output.textContent += scriptOutput;
-            output.scrollTop = output.scrollHeight; // Прокрутка вниз
+            output.scrollTop = output.scrollHeight;
         } catch (error) {
             output.textContent += "\nПроизошла ошибка выполнения: " + error.message;
             console.error("Ошибка выполнения:", error);
         } finally {
             runBtn.disabled = false;
-            // Возвращаем вывод в стандартное состояние
             pyodide.setStdout({});
             pyodide.setStderr({});
         }
     });
 
-    // Обработчик для кнопки "Сохранить файл"
     saveFileBtn.addEventListener('click', () => {
         if (!pyodide) {
             output.textContent = "Pyodide ещё не загружен.";
@@ -267,7 +291,34 @@
         }
     });
     
-    // Обработчик для кнопки "Очистить вывод"
+    installBtn.addEventListener('click', async () => {
+        if (!pyodide) {
+            output.textContent = "Pyodide ещё не загружен. Пожалуйста, подождите...";
+            return;
+        }
+
+        const packageName = installPackageInput.value.trim();
+        if (!packageName) {
+            output.textContent = "Пожалуйста, введите имя библиотеки для установки.";
+            return;
+        }
+
+        output.textContent = `Установка библиотеки '${packageName}'... Это может занять несколько секунд.\n`;
+        installBtn.disabled = true;
+        runBtn.disabled = true;
+
+        try {
+            await pyodide.loadPackage(packageName);
+            output.textContent += `Библиотека '${packageName}' успешно установлена.`;
+        } catch (error) {
+            output.textContent += `\nНе удалось установить библиотеку '${packageName}': ${error.message}`;
+            console.error("Ошибка установки:", error);
+        } finally {
+            installBtn.disabled = false;
+            runBtn.disabled = false;
+        }
+    });
+    
     clearOutputBtn.addEventListener('click', () => {
         output.textContent = '';
     });
